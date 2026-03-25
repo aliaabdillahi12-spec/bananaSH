@@ -43,7 +43,7 @@ int main() {
 
 	char input_cmdline[INPUTBUFF];
 	while(1) {
-		if(getuid() == 0) {
+		if(0 == getuid()) {
 			write(1, "#", 1);
 		} else {
 			write(1, "$", 1);
