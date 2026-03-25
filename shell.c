@@ -6,38 +6,48 @@
 
 #define INPUTBUFF 1024
 
+void interrupt_handler() {return;}
 void execute_cmd(char *input) {
-	int i = 0;
-	char *token;
-	char arg_vect[16][32];
-	char *argvect[32];
+
 	input[strcspn(input, "\n")] = 0;
 	if(input[0] == 0) return;
-	token = strtok(input, " ");
+	
+	char *argvect[32];
+	char *token = strtok(input, " ");
 
-	if(strcmp(token, "cd") == 0) {
+	if(0 == strcmp(token, "cd")) {
 		chdir(strtok(NULL, " "));
 		return;
 	}
+	
+	int i = 0;
 	while(token != NULL && i < 31) {
 		argvect[i] = token;
 		i++;
 		token = strtok(NULL, " ");
 	} 
 	argvect[i] = NULL;
-	
-	pid_t pid = fork();
-
-	if(pid == 0) {
-		execvp(argvect[0], argvect);
+		
+	if(0 == fork()) {
+		int result = execvp(argvect[0], argvect);
+		if(result == -1) {
+			printf("Command not found.\n");
+			exit(-1);
+		}
 	} else {wait(NULL);}
 }
 
 int main() {
-	int i = 0, ii = 0;
+	/* We will Make sure ctrl-C does not terminate */
+	signal(SIGINT, interrupt_handler);
+
 	char input_cmdline[INPUTBUFF];
 	while(1) {
-		write(1, ">", 1);
+		if(getuid() == 0) {
+			write(1, "#", 1);
+		} else {
+			write(1, "$", 1);
+		}
 		read(0, input_cmdline, INPUTBUFF);
 		execute_cmd(input_cmdline);
 
